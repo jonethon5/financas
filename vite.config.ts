@@ -28,8 +28,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#0B0B0C',
-        background_color: '#F4F4F2',
+        theme_color: '#F2F4F8',
+        background_color: '#F2F4F8',
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],

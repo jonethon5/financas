@@ -91,7 +91,7 @@ export function HistoryPage() {
                               {v && v.pct !== 0 && (
                                 <p className={`text-[0.8125rem] font-semibold ${v.pct > 0 ? 'text-danger' : 'text-ok'}`}>
                                   {v.pct > 0 ? '+' : ''}
-                                  {v.pct}% vs mês anterior
+                                  {v.pct}% vs {MONTH_NAMES[prev!.month - 1].slice(0, 3).toLowerCase()}
                                 </p>
                               )}
                             </div>
