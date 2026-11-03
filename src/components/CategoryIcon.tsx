@@ -23,7 +23,7 @@ export function CategoryIcon({ category, size = 'md' }: { category: Pick<Categor
     <span
       aria-hidden
       style={{ '--c': color } as CSSProperties}
-      className={`grid shrink-0 place-items-center rounded-full bg-[color-mix(in_oklab,var(--c)_14%,transparent)] text-[color-mix(in_oklab,var(--c)_85%,black)] dark:bg-[color-mix(in_oklab,var(--c)_22%,transparent)] dark:text-[color-mix(in_oklab,var(--c)_70%,white)] ${sizes[size]}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-[color-mix(in_oklab,var(--c)_14%,transparent)] text-[color-mix(in_oklab,var(--c)_85%,black)] ${sizes[size]}`}
     >
       <Icon className={icon[size]} strokeWidth={2} />
     </span>

@@ -211,10 +211,10 @@ export function HomePage() {
             <p className="font-semibold text-muted">Total do mês</p>
             <Money cents={summary.totalCents} className="mt-0.5 block text-[2.5rem] leading-tight font-bold tracking-tight" />
             <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-primary-soft px-4 py-3.5">
-              <p className="font-semibold text-primary-strong dark:text-primary">{summary.evenSplit ? 'Cada um paga' : 'Sua parte'}</p>
+              <p className="font-semibold text-primary-strong">{summary.evenSplit ? 'Cada um paga' : 'Sua parte'}</p>
               <Money
                 cents={summary.evenSplit ? summary.eachCents : (summary.perMember.get(me?.id ?? '') ?? 0)}
-                className="text-[1.5rem] font-bold text-primary-strong dark:text-primary"
+                className="text-[1.5rem] font-bold text-primary-strong"
               />
             </div>
             <div className="mt-4 mb-2 flex items-center justify-between text-[0.9375rem]">

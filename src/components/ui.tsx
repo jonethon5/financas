@@ -5,8 +5,8 @@ import { formatBRL } from '../lib/money'
 const variants = {
   primary: 'bg-primary text-on-primary hover:bg-primary-strong active:opacity-90 disabled:opacity-50',
   secondary: 'bg-surface text-ink border border-line hover:bg-surface-2 active:opacity-90 disabled:opacity-50',
-  soft: 'bg-primary-soft text-primary-strong hover:brightness-95 disabled:opacity-50 dark:text-primary',
-  ghost: 'text-primary-strong hover:bg-primary-soft disabled:opacity-50 dark:text-primary',
+  soft: 'bg-primary-soft text-primary-strong hover:brightness-95 disabled:opacity-50',
+  ghost: 'text-primary-strong hover:bg-primary-soft disabled:opacity-50',
   danger: 'bg-danger-soft text-danger hover:brightness-95 disabled:opacity-50',
 }
 
@@ -167,7 +167,7 @@ export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () =
 export function EmptyState({ icon, title, children, action }: { icon: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
-      <div className="mb-4 grid size-16 place-items-center rounded-full bg-primary-soft text-primary-strong dark:text-primary">{icon}</div>
+      <div className="mb-4 grid size-16 place-items-center rounded-full bg-primary-soft text-primary-strong">{icon}</div>
       <h2 className="text-lg font-bold">{title}</h2>
       {children && <div className="mt-1.5 max-w-sm text-muted">{children}</div>}
       {action && <div className="mt-5">{action}</div>}
@@ -206,7 +206,7 @@ export function Badge({ tone, children }: { tone: 'ok' | 'warn' | 'danger' | 'ne
     warn: 'bg-warn-soft text-warn',
     danger: 'bg-danger-soft text-danger',
     neutral: 'bg-surface-2 text-muted',
-    primary: 'bg-primary-soft text-primary-strong dark:text-primary',
+    primary: 'bg-primary-soft text-primary-strong',
   }
   return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold whitespace-nowrap ${tones[tone]}`}>{children}</span>
 }

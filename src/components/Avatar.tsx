@@ -19,7 +19,7 @@ export function Avatar({ member, size = 'md' }: { member: Pick<Member, 'name' | 
     <span
       aria-hidden
       style={{ '--c': member.color } as CSSProperties}
-      className={`inline-grid shrink-0 place-items-center rounded-full font-bold ${sizes[size]} bg-[color-mix(in_oklab,var(--c)_15%,transparent)] text-[color-mix(in_oklab,var(--c)_85%,black)] dark:bg-[color-mix(in_oklab,var(--c)_24%,transparent)] dark:text-[color-mix(in_oklab,var(--c)_60%,white)]`}
+      className={`inline-grid shrink-0 place-items-center rounded-full font-bold ${sizes[size]} bg-[color-mix(in_oklab,var(--c)_15%,transparent)] text-[color-mix(in_oklab,var(--c)_85%,black)]`}
     >
       {initials(displayName(member))}
     </span>
@@ -27,4 +27,4 @@ export function Avatar({ member, size = 'md' }: { member: Pick<Member, 'name' | 
 }
 
 /** Cores dos moradores. */
-export const MEMBER_COLORS = ['#37849A', '#E0457B', '#8B5CF6', '#F07B1D', '#10A37F', '#3B82F6', '#C79A0A', '#6B7280']
+export const MEMBER_COLORS = ['#4A90A4', '#E0457B', '#8B5CF6', '#F07B1D', '#10A37F', '#3B82F6', '#C79A0A', '#6B7280']

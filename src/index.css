@@ -12,7 +12,7 @@
 }
 
 /*
-  Visual claro e calmo: fundo cinza-azulado, cartões brancos e um azul-petróleo como cor principal.
+  Visual claro e calmo: fundo cinza-azulado, cartões brancos e o azul-petróleo dos prints como cor principal.
   Verde/âmbar/vermelho só para status (paga, vence logo, vencida). Cores das categorias nos ícones.
 */
 @theme inline {
@@ -38,16 +38,17 @@
 }
 
 :root {
-  --bg: #f2f4f8;
+  /* Cores tiradas dos prints de referência. Sempre claro, mesmo com o celular no modo escuro. */
+  --bg: #f5f6fa;
   --surface: #ffffff;
   --surface-2: #eef1f5;
   --ink: #1f2933;
-  --muted: #687280;
-  --faint: #a0a8b3;
-  --line: #e4e8ee;
-  --primary: #37849a;
-  --primary-strong: #2b6c7f;
-  --primary-soft: #e5f1f4;
+  --muted: #6b7480;
+  --faint: #a3abb5;
+  --line: #e6e9ef;
+  --primary: #4a90a4;
+  --primary-strong: #3b7a8d;
+  --primary-soft: #eaf5f4;
   --on-primary: #ffffff;
   --ok: #16a34a;
   --ok-soft: #e6f6ec;
@@ -56,29 +57,6 @@
   --danger: #d92d20;
   --danger-soft: #fdeceb;
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1519;
-    --surface: #172026;
-    --surface-2: #1f2a31;
-    --ink: #e8eef1;
-    --muted: #9aa8b1;
-    --faint: #66737c;
-    --line: #26333b;
-    --primary: #5aafc4;
-    --primary-strong: #7cc3d4;
-    --primary-soft: #1b3640;
-    --on-primary: #0b1a1f;
-    --ok: #34d399;
-    --ok-soft: #12302a;
-    --warn: #fbbf24;
-    --warn-soft: #33290f;
-    --danger: #f87171;
-    --danger-soft: #3a1b1b;
-    color-scheme: dark;
-  }
 }
 
 html {
@@ -116,11 +94,6 @@ h3 {
   box-shadow:
     0 1px 2px rgb(16 24 40 / 0.04),
     0 6px 20px -8px rgb(16 24 40 / 0.08);
-}
-@media (prefers-color-scheme: dark) {
-  .shadow-soft {
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset;
-  }
 }
 
 .no-scrollbar {

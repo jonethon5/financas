@@ -70,7 +70,7 @@ function member(name: string, color: string, i: number, extra: Partial<Member> =
 
 function seed(): State {
   const members = [
-    member('Ana', '#37849A', 0, { user_id: 'demo-user', username: 'ana', role: 'admin' }),
+    member('Ana', '#4A90A4', 0, { user_id: 'demo-user', username: 'ana', role: 'admin' }),
     member('Bruno', '#E0457B', 1),
     member('Carla', '#8B5CF6', 2),
     member('Davi', '#F07B1D', 3),
@@ -221,7 +221,7 @@ export const localRepo: Repo = {
   async saveMember(_h, { id: memberId, ...values }) {
     const s = db()
     if (memberId) Object.assign(s.members.find((m) => m.id === memberId)!, values)
-    else s.members.push(member(values.name ?? 'Morador', values.color ?? '#37849A', s.members.length, values))
+    else s.members.push(member(values.name ?? 'Morador', values.color ?? '#4A90A4', s.members.length, values))
     commit()
   },
 

@@ -78,7 +78,7 @@ export function Layout() {
               end={to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition ${
-                  isActive ? 'bg-primary-soft text-primary-strong dark:text-primary' : 'text-muted hover:bg-surface-2 hover:text-ink'
+                  isActive ? 'bg-primary-soft text-primary-strong' : 'text-muted hover:bg-surface-2 hover:text-ink'
                 }`
               }
             >
@@ -103,7 +103,7 @@ export function Layout() {
         {demo && (
           <Link
             to="/ajustes#demonstracao"
-            className="pt-safe flex items-center justify-center gap-2 bg-primary-soft px-4 py-2 text-sm font-semibold text-primary-strong dark:text-primary"
+            className="pt-safe flex items-center justify-center gap-2 bg-primary-soft px-4 py-2 text-sm font-semibold text-primary-strong"
           >
             <Smartphone className="size-4" aria-hidden /> Modo demonstração — os dados ficam só neste aparelho
           </Link>
