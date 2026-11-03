@@ -427,3 +427,9 @@ verify_jwt = false
 
 [functions.admin-users]
 verify_jwt = false
+
+[functions.push]
+verify_jwt = false
+
+[functions.send-reminders]
+verify_jwt = false

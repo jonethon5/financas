@@ -34,6 +34,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: `${base}index.html`,
+        // Recebe as notificações push de vencimento
+        importScripts: ['push-sw.js'],
         // Consultas (GET) ao Supabase ficam em cache para abrir o app offline e ver os últimos dados.
         runtimeCaching: [
           {

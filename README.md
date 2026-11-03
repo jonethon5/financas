@@ -26,7 +26,7 @@ guardados só no próprio aparelho. Dá para testar tudo (lançar, marcar como p
 - [x] 2. Contas fixas, extras, divisão, código de barras e alertas
 - [x] 3. Histórico, comparativo com o mês anterior e fechamento do mês *(tela "Ano" vem na etapa 5)*
 - [ ] 4. Acerto entre moradores, WhatsApp e exportar
-- [ ] 5. Gráficos, tela do ano e lembretes com o app fechado
+- [ ] 5. Gráficos e tela do ano *(lembretes com o app fechado já estão prontos)*
 - [ ] 6. Assistente de IA (Gemini via Edge Function)
 
 ---
@@ -102,7 +102,13 @@ Supabase (os dados não se perdem).
   As notificações no iPhone só funcionam com o app instalado assim (iOS 16.4 ou mais novo).
 - **Android (Chrome):** abra o site → menu ⋮ → **Instalar app**.
 
-Depois, em **Ajustes → Avisos de vencimento → Ativar notificações neste aparelho**.
+Depois, em **Ajustes → Avisos de vencimento → Ativar notificações neste aparelho** e toque em
+**Enviar notificação de teste** para conferir.
+
+Os avisos chegam **todo dia por volta das 8h, mesmo com o app fechado** (workflow `reminders.yml`): cada pessoa
+escolhe se quer ser avisada 7 dias antes, 3 dias antes, 1 dia antes e/ou no dia; contas vencidas e não pagas são
+lembradas 1 e 3 dias depois. As chaves das notificações (VAPID) são geradas sozinhas no primeiro uso e ficam só no
+banco. O horário pode atrasar alguns minutos (o agendador do GitHub não é exato).
 
 O app funciona offline para consulta: mostra os últimos dados carregados.
 
@@ -157,6 +163,7 @@ src/
   lib/            regras puras com testes: dinheiro, divisão, acerto, código de barras, Pix, vencimentos
 supabase/
   migrations/     banco (tabelas, RLS, funções)
-  functions/      Edge Functions: setup (primeira configuração) e admin-users (acessos)
-.github/workflows deploy no Pages, Supabase e keepalive
+  functions/      Edge Functions: setup (primeira configuração), admin-users (acessos),
+                  push (inscrição/teste de notificações) e send-reminders (avisos do dia)
+.github/workflows deploy no Pages, Supabase, avisos diários e keepalive
 ```

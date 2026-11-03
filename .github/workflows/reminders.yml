@@ -1,0 +1,33 @@
+name: Avisos de vencimento
+
+# Todo dia às 08:00 (Brasília) pede ao Supabase para mandar as notificações das contas que vencem.
+# Também conta como uso do projeto, ajudando a mantê-lo ativo no plano gratuito.
+on:
+  schedule:
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar avisos do dia
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SETUP_CODE: ${{ secrets.SETUP_CODE }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ] || [ -z "$SETUP_CODE" ]; then
+            echo "::notice::Supabase ainda não configurado. Nada a fazer."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 60 \
+            -X POST "$SUPABASE_URL/functions/v1/send-reminders" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "x-cron-secret: $SETUP_CODE" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo
