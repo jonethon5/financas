@@ -1,0 +1,34 @@
+name: Manter Supabase ativo
+
+# O plano gratuito do Supabase pausa o projeto depois de ~7 dias sem uso.
+# Uma consulta leve por semana evita isso.
+on:
+  schedule:
+    - cron: '0 12 * * 1' # toda segunda-feira, 09:00 de Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::notice::Supabase ainda não configurado. Nada a fazer."
+            exit 0
+          fi
+          # Chama a função public.ping() (não lê nenhum dado da casa).
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/ping" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo
+          echo "Supabase respondeu."

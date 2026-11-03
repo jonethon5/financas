@@ -1,0 +1,77 @@
+name: Supabase (banco e funções)
+
+# Aplica o banco (supabase/migrations), publica as Edge Functions (supabase/functions),
+# define o secret SETUP_CODE das funções e desativa o cadastro público.
+# Roda sozinho quando algo em supabase/ muda, ou manualmente em Actions › Run workflow.
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**', '.github/workflows/supabase.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      ref: ${{ steps.check.outputs.ref }}
+    steps:
+      - id: check
+        env:
+          URL: ${{ secrets.VITE_SUPABASE_URL }}
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SETUP_CODE: ${{ secrets.SETUP_CODE }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$TOKEN" ] || [ -z "$DB_PASSWORD" ] || [ -z "$SETUP_CODE" ]; then
+            echo "::notice::Supabase ainda não configurado (faltam secrets, veja o README). Nada a fazer."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            # https://abcdefgh.supabase.co → abcdefgh
+            echo "ref=$(echo "$URL" | sed -E 's#https?://([^.]+)\..*#\1#')" >> "$GITHUB_OUTPUT"
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: check
+    if: needs.check.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ${{ needs.check.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Ligar ao projeto
+        run: supabase link --project-ref "$PROJECT_REF"
+
+      - name: Aplicar o banco (migrations)
+        run: supabase db push
+
+      - name: Publicar Edge Functions
+        run: supabase functions deploy --project-ref "$PROJECT_REF"
+
+      - name: Secrets das funções
+        env:
+          SETUP_CODE: ${{ secrets.SETUP_CODE }}
+        run: supabase secrets set --project-ref "$PROJECT_REF" SETUP_CODE="$SETUP_CODE"
+
+      - name: Desativar cadastro público
+        run: |
+          curl --fail --silent --show-error -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"disable_signup": true}' > /dev/null
+          echo "Cadastro público desativado."

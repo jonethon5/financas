@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+/* Inter com tamanho óptico (desenho se ajusta a títulos e números grandes). Só o alfabeto latino: cobre o português. */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+  Visual claro e calmo: fundo cinza-azulado, cartões brancos e um azul-petróleo como cor principal.
+  Verde/âmbar/vermelho só para status (paga, vence logo, vencida). Cores das categorias nos ícones.
+*/
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+}
+
+:root {
+  --bg: #f2f4f8;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --ink: #1f2933;
+  --muted: #687280;
+  --faint: #a0a8b3;
+  --line: #e4e8ee;
+  --primary: #37849a;
+  --primary-strong: #2b6c7f;
+  --primary-soft: #e5f1f4;
+  --on-primary: #ffffff;
+  --ok: #16a34a;
+  --ok-soft: #e6f6ec;
+  --warn: #c26a00;
+  --warn-soft: #fdf1df;
+  --danger: #d92d20;
+  --danger-soft: #fdeceb;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1519;
+    --surface: #172026;
+    --surface-2: #1f2a31;
+    --ink: #e8eef1;
+    --muted: #9aa8b1;
+    --faint: #66737c;
+    --line: #26333b;
+    --primary: #5aafc4;
+    --primary-strong: #7cc3d4;
+    --primary-soft: #1b3640;
+    --on-primary: #0b1a1f;
+    --ok: #34d399;
+    --ok-soft: #12302a;
+    --warn: #fbbf24;
+    --warn-soft: #33290f;
+    --danger: #f87171;
+    --danger-soft: #3a1b1b;
+    color-scheme: dark;
+  }
+}
+
+html {
+  /* Base um pouco maior que o padrão: mais fácil de ler para todos da casa. */
+  font-size: 17px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-bg font-sans text-ink antialiased;
+  font-feature-settings: 'cv11';
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Sombra bem suave para os cartões (como nos apps de referência) */
+.shadow-soft {
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.04),
+    0 6px 20px -8px rgb(16 24 40 / 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  .shadow-soft {
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.animate-toast {
+  animation: toast-in 180ms ease-out;
+}
