@@ -61,7 +61,7 @@ function member(name: string, color: string, i: number, extra: Partial<Member> =
     nickname: null,
     color,
     pix_key: null,
-    reminder_days: [3, 1, 0],
+    reminder_days: [5, 0],
     active: true,
     sort_order: i,
     ...extra,

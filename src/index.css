@@ -140,6 +140,20 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Linha que corre dentro do quadro da câmera */
+@keyframes scanline {
+  0%,
+  100% {
+    top: 12%;
+  }
+  50% {
+    top: 88%;
+  }
+}
+.animate-scanline {
+  animation: scanline 2.2s ease-in-out infinite;
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

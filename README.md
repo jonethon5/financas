@@ -102,12 +102,10 @@ Supabase (os dados não se perdem).
   As notificações no iPhone só funcionam com o app instalado assim (iOS 16.4 ou mais novo).
 - **Android (Chrome):** abra o site → menu ⋮ → **Instalar app**.
 
-Depois, em **Ajustes → Avisos de vencimento → Ativar notificações neste aparelho** e toque em
-**Enviar notificação de teste** para conferir.
+Depois, em **Ajustes → Avisos**, ligue o botão (o celular pede permissão uma vez).
 
-Os avisos chegam **todo dia por volta das 8h, mesmo com o app fechado** (workflow `reminders.yml`): cada pessoa
-escolhe se quer ser avisada 7 dias antes, 3 dias antes, 1 dia antes e/ou no dia; contas vencidas e não pagas são
-lembradas 1 e 3 dias depois. As chaves das notificações (VAPID) são geradas sozinhas no primeiro uso e ficam só no
+Os avisos chegam **por volta das 8h, mesmo com o app fechado** (workflow `reminders.yml`): **5 dias antes e no dia
+do vencimento**; contas vencidas e não pagas são lembradas 1 e 3 dias depois. As chaves das notificações (VAPID) são geradas sozinhas no primeiro uso e ficam só no
 banco. O horário pode atrasar alguns minutos (o agendador do GitHub não é exato).
 
 O app funciona offline para consulta: mostra os últimos dados carregados.
@@ -121,6 +119,9 @@ O app funciona offline para consulta: mostra os últimos dados carregados.
   3º dígito). O valor só é preenchido quando o código traz o **valor em reais** (3º dígito 6 ou 8, padrão FEBRABAN);
   com 7 ou 9 é valor de referência e o app só avisa. O vencimento normalmente não vem no código.
 - O **Pix copia e cola** muda a cada conta, então ele é guardado na conta do mês (com botão "Copiar Pix").
+- **Câmera:** o botão **Escanear** lê o código de barras da conta de papel e o QR Code do Pix. Usa o leitor do
+  próprio celular quando existe (Android) e, no iPhone, o ZXing (WebAssembly), carregado só ao abrir a câmera.
+  Só aceita a leitura quando os dígitos verificadores conferem.
 
 ## Desenvolvimento
 

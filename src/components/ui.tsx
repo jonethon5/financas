@@ -129,15 +129,16 @@ export function Chip({
 }
 
 /** Botão liga/desliga no estilo do iPhone. */
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+export function Switch({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-[1.9rem] w-[3.1rem] shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-ok' : 'bg-[#e3e5e9]'}`}
+      className={`relative h-[1.9rem] w-[3.1rem] shrink-0 rounded-full transition-colors duration-200 disabled:opacity-50 ${checked ? 'bg-ok' : 'bg-[#e3e5e9]'}`}
     >
       <span
         className={`absolute top-[0.125rem] left-[0.125rem] size-[1.65rem] rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/0.18)] transition-transform duration-200 ${checked ? 'translate-x-[1.2rem]' : ''}`}

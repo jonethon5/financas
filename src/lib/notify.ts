@@ -2,6 +2,29 @@ import type { Expense } from '../types'
 import { daysUntil, dueLabel } from './due'
 import { formatBRL } from './money'
 
+/** Avisos automáticos: 5 dias antes e no dia do vencimento (contas vencidas também são lembradas). */
+export const REMINDER_DAYS = [5, 0]
+
+const OFF_KEY = 'financas:avisos-desligados'
+
+/** A pessoa desligou os avisos neste aparelho? */
+export function remindersOff(): boolean {
+  try {
+    return localStorage.getItem(OFF_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setRemindersOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem(OFF_KEY, '1')
+    else localStorage.removeItem(OFF_KEY)
+  } catch {
+    /* sem armazenamento: nada a guardar */
+  }
+}
+
 /** Contas que merecem aviso hoje, conforme os dias de antecedência escolhidos (ex.: 3, 1 e 0 = no dia). */
 export function billsToRemind(expenses: Expense[], today: string, reminderDays: number[]): Expense[] {
   return expenses.filter((e) => {
@@ -20,7 +43,7 @@ export function notificationsSupported(): boolean {
  * Funciona quando o app é aberto. No iPhone, só com o app instalado na tela inicial.
  */
 export async function notifyDueBills(expenses: Expense[], today: string, reminderDays: number[]) {
-  if (!notificationsSupported() || Notification.permission !== 'granted') return
+  if (!notificationsSupported() || Notification.permission !== 'granted' || remindersOff()) return
   const registration = await navigator.serviceWorker.getRegistration()
   for (const e of billsToRemind(expenses, today, reminderDays)) {
     const key = `financas:aviso:${e.id}:${today}`

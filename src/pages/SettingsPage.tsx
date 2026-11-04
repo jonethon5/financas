@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Bell, BellOff, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Shield, Smartphone, UserPlus } from 'lucide-react'
+import { Bell, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Shield, UserPlus } from 'lucide-react'
 import { Avatar, MEMBER_COLORS, displayName } from '../components/Avatar'
 import { CategoryIcon } from '../components/CategoryIcon'
 import { Sheet } from '../components/Sheet'
-import { Badge, Button, Card, Chip, ErrorBox, Field, PageHeader, SectionTitle } from '../components/ui'
+import { Badge, Button, Card, Chip, ErrorBox, Field, IconTile, List, PageHeader, Row, SectionTitle, Switch } from '../components/ui'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../auth/AuthProvider'
 import { useCategories, useManageLogin, useRecurringBills, useSaveMember, useSaveRecurringBill } from '../data/hooks'
@@ -12,8 +12,8 @@ import { resetDemo } from '../data/localRepo'
 import { useHousehold } from '../household/HouseholdProvider'
 import { centsToInput, formatBRL, parseBRL } from '../lib/money'
 import { isValidUsername, normalizeUsername, suggestUsername } from '../lib/login'
-import { notificationsSupported } from '../lib/notify'
-import { currentPushSubscription, enablePush, pushSupported, sendTestPush } from '../lib/push'
+import { notificationsSupported, REMINDER_DAYS, remindersOff, setRemindersOff } from '../lib/notify'
+import { currentPushSubscription, disablePush, enablePush, pushSupported } from '../lib/push'
 import { friendlyError } from '../lib/supabase'
 import type { Member, RecurringBill } from '../types'
 import { PasswordField } from './LoginPage'
@@ -376,13 +376,6 @@ function RecurringSheet({ bill, open, onClose }: { bill: RecurringBill | null; o
 // Avisos
 // ---------------------------------------------------------------------------
 
-const REMINDER_OPTIONS = [
-  { days: 7, label: '7 dias antes' },
-  { days: 3, label: '3 dias antes' },
-  { days: 1, label: '1 dia antes' },
-  { days: 0, label: 'No dia' },
-]
-
 function RemindersSection() {
   const { me, household, demo } = useHousehold()
   const save = useSaveMember(household.id)
@@ -395,24 +388,36 @@ function RemindersSection() {
   useEffect(() => {
     if (!notificationsSupported() || (!demo && !pushSupported())) return setState('unsupported')
     if (Notification.permission === 'denied') return setState('denied')
+    if (remindersOff()) return setState('off')
     if (demo) return setState(Notification.permission === 'granted' ? 'on' : 'off')
     currentPushSubscription().then((sub) => setState(sub && Notification.permission === 'granted' ? 'on' : 'off'))
   }, [demo])
 
   if (!me) return null
-  const days = me.reminder_days
 
-  async function enable() {
+  async function toggle(on: boolean) {
     setBusy(true)
     setError(null)
     try {
-      if (demo) {
-        const result = await Notification.requestPermission()
-        setState(result === 'granted' ? 'on' : result === 'denied' ? 'denied' : 'off')
-      } else {
-        await enablePush()
+      if (on) {
+        if (demo) {
+          const result = await Notification.requestPermission()
+          if (result !== 'granted') {
+            setState(result === 'denied' ? 'denied' : 'off')
+            return
+          }
+        } else {
+          await enablePush()
+        }
+        setRemindersOff(false)
+        if (me!.reminder_days.join() !== REMINDER_DAYS.join()) save.mutate({ id: me!.id, reminder_days: REMINDER_DAYS })
         setState('on')
-        toast('Notificações ativadas')
+        toast('Avisos ligados')
+      } else {
+        if (!demo) await disablePush()
+        setRemindersOff(true)
+        setState('off')
+        toast('Avisos desligados')
       }
     } catch (err) {
       setError(friendlyError(err))
@@ -422,84 +427,41 @@ function RemindersSection() {
     }
   }
 
-  async function test() {
-    setBusy(true)
-    setError(null)
-    try {
-      await sendTestPush()
-      toast('Notificação de teste enviada')
-    } catch (err) {
-      setError(friendlyError(err))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  function toggle(d: number) {
-    const next = days.includes(d) ? days.filter((x) => x !== d) : [...days, d].sort((a, b) => b - a)
-    save.mutate({ id: me!.id, reminder_days: next }, { onSuccess: () => toast('Avisos atualizados') })
-  }
+  const subtitle =
+    state === 'denied'
+      ? 'Bloqueados nas configurações do celular'
+      : state === 'unsupported'
+        ? 'Abra pelo ícone do app na tela inicial'
+        : '5 dias antes e no dia de vencer'
 
   return (
     <section className="mb-8">
-      <SectionTitle>Avisos de vencimento</SectionTitle>
-      <Card>
-        <p className="mb-3 text-muted">Quando avisar você:</p>
-        <div className="flex flex-wrap gap-2">
-          {REMINDER_OPTIONS.map((o) => (
-            <Chip key={o.days} selected={days.includes(o.days)} onClick={() => toggle(o.days)}>
-              {o.label}
-            </Chip>
-          ))}
+      <List>
+        <Row
+          icon={
+            <IconTile>
+              <Bell strokeWidth={1.8} />
+            </IconTile>
+          }
+          title="Avisos"
+          subtitle={subtitle}
+          trailing={
+            <Switch
+              checked={state === 'on'}
+              disabled={busy || state === 'loading' || state === 'denied' || state === 'unsupported'}
+              onChange={toggle}
+              label="Avisos de vencimento"
+            />
+          }
+        />
+      </List>
+      {error && (
+        <div className="mt-3">
+          <ErrorBox message={error} />
         </div>
-        <div className="mt-5 flex flex-col gap-3 border-t border-line pt-4">
-          {error && <ErrorBox message={error} />}
-          {state === 'on' ? (
-            <>
-              <p className="flex items-center gap-2 font-semibold text-ok">
-                <Bell className="size-5" aria-hidden /> Notificações ativadas neste aparelho
-              </p>
-              {!demo && (
-                <Button variant="secondary" size="md" loading={busy} onClick={test}>
-                  Enviar notificação de teste
-                </Button>
-              )}
-            </>
-          ) : state === 'denied' ? (
-            <p className="flex items-start gap-2 text-muted">
-              <BellOff className="mt-0.5 size-5 shrink-0" aria-hidden /> As notificações estão bloqueadas. Libere nas configurações do celular para este app.
-            </p>
-          ) : state === 'unsupported' ? (
-            <p className="text-muted">Este navegador não mostra notificações. No iPhone, instale o app na tela inicial primeiro (veja abaixo).</p>
-          ) : state === 'off' ? (
-            <Button variant="soft" className="w-full" loading={busy} onClick={enable}>
-              <Bell className="size-5" aria-hidden /> Ativar notificações neste aparelho
-            </Button>
-          ) : null}
-          <p className="text-[0.9375rem] text-muted">
-            {demo
-              ? 'No modo demonstração o aviso aparece quando você abre o app. Com o Supabase ligado, chega todo dia às 8h mesmo com o app fechado.'
-              : 'Os avisos chegam todo dia por volta das 8h, mesmo com o app fechado. Também aparecem no topo da tela inicial.'}
-          </p>
-        </div>
-      </Card>
+      )}
     </section>
   )
-}
-
-// ---------------------------------------------------------------------------
-
-function useInstallPrompt() {
-  const [prompt, setPrompt] = useState<(Event & { prompt: () => Promise<void> }) | null>(null)
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault()
-      setPrompt(e as Event & { prompt: () => Promise<void> })
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-  return prompt
 }
 
 export function SettingsPage() {
@@ -509,8 +471,6 @@ export function SettingsPage() {
   const categories = useCategories()
   const [memberSheet, setMemberSheet] = useState<{ open: boolean; member: Member | null }>({ open: false, member: null })
   const [billSheet, setBillSheet] = useState<{ open: boolean; bill: RecurringBill | null }>({ open: false, bill: null })
-  const installPrompt = useInstallPrompt()
-  const standalone = window.matchMedia('(display-mode: standalone)').matches
 
   return (
     <>
@@ -605,29 +565,6 @@ export function SettingsPage() {
         </Card>
       </section>
 
-      {!standalone && (
-        <section className="mb-8">
-          <SectionTitle>Instalar no celular</SectionTitle>
-          <Card>
-            <div className="flex gap-4">
-              <Smartphone className="size-7 shrink-0 text-primary" aria-hidden />
-              <div className="text-muted">
-                <p>
-                  <strong className="text-ink">iPhone:</strong> no Safari, toque em Compartilhar (quadrado com seta) › “Adicionar à Tela de Início”.
-                </p>
-                <p className="mt-2">
-                  <strong className="text-ink">Android:</strong> no Chrome, menu ⋮ › “Instalar app”.
-                </p>
-              </div>
-            </div>
-            {installPrompt && (
-              <Button className="mt-4 w-full" onClick={() => installPrompt.prompt()}>
-                Instalar agora
-              </Button>
-            )}
-          </Card>
-        </section>
-      )}
 
       {demo && (
         <section id="demonstracao" className="mb-7">
@@ -639,7 +576,8 @@ export function SettingsPage() {
             </p>
             <Button
               variant="secondary"
-              className="mt-4 w-full"
+              size="md"
+              className="mt-4 w-full !bg-surface-2 !shadow-none"
               onClick={() => {
                 if (window.confirm('Apagar tudo e recomeçar com os dados de exemplo?')) {
                   resetDemo()

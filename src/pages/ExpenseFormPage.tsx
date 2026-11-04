@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
-import { Camera, CheckCircle2, ChevronDown, ClipboardPaste, Paperclip, ScanBarcode, X } from 'lucide-react'
+import { Camera, CheckCircle2, ChevronDown, ClipboardPaste, Paperclip, ScanBarcode, ScanLine, X } from 'lucide-react'
 import { Avatar, displayName } from '../components/Avatar'
 import { categoryIcon } from '../components/CategoryIcon'
+import { Scanner } from '../components/Scanner'
 import { Button, Chip, ErrorBox, Field, NavBar, NavButton, Spinner, Switch, TextArea } from '../components/ui'
 import { useToast } from '../components/Toast'
 import { useCategories, useMonth, useRecurringBills, useSaveExpense } from '../data/hooks'
@@ -13,6 +14,7 @@ import { MONTH_NAMES, currentYearMonth, sameYearMonth } from '../lib/dates'
 import { formatDate, todayIso } from '../lib/due'
 import { centsToInput, formatBRL, parseBRL } from '../lib/money'
 import { parsePix } from '../lib/pix'
+import type { ScanResult } from '../lib/scan'
 import { buildShares, splitEqual, type SplitMode } from '../lib/split'
 import { friendlyError } from '../lib/supabase'
 import type { Expense, ExpenseInput } from '../types'
@@ -94,8 +96,8 @@ export function ExpenseFormPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
-  // Vindo do menu do "+": código já colado ou pedido para abrir o campo do código
-  const incoming = (location.state ?? {}) as { barcode?: string; focusBarcode?: boolean }
+  // Vindo do menu do "+": código já colado, pedido para abrir o campo do código ou para abrir a câmera
+  const incoming = (location.state ?? {}) as { barcode?: string; focusBarcode?: boolean; scan?: boolean }
   const toast = useToast()
   const repo = useRepo()
   const { household, activeMembers, members, me } = useHousehold()
@@ -114,6 +116,7 @@ export function ExpenseFormPage() {
   const [codeInfo, setCodeInfo] = useState<BillCode | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const [showCode, setShowCode] = useState(Boolean(incoming.focusBarcode || incoming.barcode))
+  const [scanOpen, setScanOpen] = useState(Boolean(incoming.scan))
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -180,12 +183,19 @@ export function ExpenseFormPage() {
     })
   }
 
-  // Código colado pelo menu do "+": aplica assim que o formulário existir
+  // Código colado pelo menu do "+" (código de barras ou Pix): aplica assim que o formulário existir
   useEffect(() => {
     if (form && pendingCode.current) {
-      const code = pendingCode.current
+      const code = pendingCode.current.trim()
       pendingCode.current = null
-      applyCode(code)
+      if (code.startsWith('000201')) {
+        const info = parsePix(code)
+        setForm((f) => (f ? { ...f, pixCode: code, amount: info?.ok && info.amountCents != null ? centsToInput(info.amountCents) : f.amount } : f))
+        setShowCode(false)
+        setMoreOpen(true)
+      } else {
+        applyCode(code)
+      }
     }
   })
 
@@ -207,6 +217,22 @@ export function ExpenseFormPage() {
       if (text) applyCode(text)
     } catch {
       toast('Toque no campo e use “Colar” do teclado')
+    }
+  }
+
+  function onScan(result: ScanResult) {
+    setScanOpen(false)
+    if (result.kind === 'bill') {
+      setShowCode(true)
+      applyCode(result.digits)
+      toast('Código lido')
+    } else {
+      const info = parsePix(result.code)
+      setForm((f) =>
+        f ? { ...f, pixCode: result.code, amount: info?.ok && info.amountCents != null && !f.amount ? centsToInput(info.amountCents) : f.amount } : f,
+      )
+      setMoreOpen(true)
+      toast('Pix lido')
     }
   }
 
@@ -312,7 +338,7 @@ export function ExpenseFormPage() {
               inputMode="decimal"
               placeholder="0,00"
               autoComplete="off"
-              autoFocus={!showCode && (!expense || expense.amount_cents == null)}
+              autoFocus={!showCode && !scanOpen && (!expense || expense.amount_cents == null)}
               value={form.amount}
               onChange={(e) => set('amount', e.target.value)}
               aria-invalid={Boolean(errors.amount)}
@@ -371,15 +397,27 @@ export function ExpenseFormPage() {
               }
             />
             {codeInfo?.ok && <p className="num mt-2 px-1 font-mono text-[0.8125rem] break-all text-muted">{formatBillCode(codeInfo.digits)}</p>}
+            <button type="button" onClick={() => setScanOpen(true)} className="mt-3 flex min-h-10 items-center gap-2 px-1 text-[0.9375rem] text-primary">
+              <ScanLine className="size-5" strokeWidth={1.8} aria-hidden /> Escanear com a câmera
+            </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={pasteCode}
-            className="shadow-soft mx-auto flex min-h-11 items-center gap-2 rounded-full bg-surface px-5 text-[0.9375rem] font-medium text-primary transition active:bg-surface-2"
-          >
-            <ScanBarcode className="size-5" strokeWidth={1.8} aria-hidden /> Colar código de barras
-          </button>
+          <div className="flex justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setScanOpen(true)}
+              className="flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-[0.9375rem] font-medium text-white transition active:bg-primary-strong"
+            >
+              <ScanLine className="size-5" strokeWidth={1.8} aria-hidden /> Escanear
+            </button>
+            <button
+              type="button"
+              onClick={pasteCode}
+              className="shadow-soft flex min-h-11 items-center gap-2 rounded-full bg-surface px-5 text-[0.9375rem] font-medium text-primary transition active:bg-surface-2"
+            >
+              <ScanBarcode className="size-5" strokeWidth={1.8} aria-hidden /> Colar código
+            </button>
+          </div>
         )}
 
         {/* Categoria */}
@@ -612,6 +650,18 @@ export function ExpenseFormPage() {
           </Button>
         </div>
       </fieldset>
+
+      {scanOpen && !closed && (
+        <Scanner
+          onResult={onScan}
+          onClose={() => setScanOpen(false)}
+          onManual={() => {
+            setScanOpen(false)
+            setShowCode(true)
+            setTimeout(() => document.querySelector<HTMLInputElement>('input[placeholder="Cole aqui a linha digitável"]')?.focus(), 50)
+          }}
+        />
+      )}
     </form>
   )
 }
