@@ -164,7 +164,8 @@ async function askGemini(apiKey: string, context: string, history: Turn[], quest
     console.error('gemini', res.status, detail.slice(0, 500))
     if (res.status === 429) throw new UserError('O assistente está muito ocupado agora. Tente de novo em um minuto.', 503)
     if (res.status === 400 && /api key/i.test(detail)) throw new UserError('A chave do Gemini não é válida. Confira o secret GEMINI_API_KEY.', 503)
-    if (res.status === 403) throw new UserError('A chave do Gemini não tem permissão. Gere uma nova no Google AI Studio.', 503)
+    // Chaves novas (formato "AQ.") às vezes são recusadas com 401: gerar outra costuma resolver
+    if (res.status === 401 || res.status === 403) throw new UserError('O Google recusou a chave do Gemini. Gere uma nova no Google AI Studio e troque o secret GEMINI_API_KEY.', 503)
     if (res.status === 404) throw new UserError(`O modelo "${MODEL}" não existe mais. Ajuste o secret GEMINI_MODEL.`, 503)
     throw new UserError('O assistente não respondeu. Tente de novo.', 502)
   }
