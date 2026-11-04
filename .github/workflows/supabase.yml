@@ -50,28 +50,29 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Versão fixa: a 3.0 mudou as opções dos comandos (db push passou a ser local por padrão)
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.0.0
 
       - name: Ligar ao projeto
         run: supabase link --project-ref "$PROJECT_REF"
 
       - name: Aplicar o banco (migrations)
-        run: supabase db push
+        run: supabase db push --remote --password "$SUPABASE_DB_PASSWORD"
 
       - name: Publicar Edge Functions
-        run: supabase functions deploy --project-ref "$PROJECT_REF"
+        run: supabase functions deploy
 
       - name: Secrets das funções
         env:
           SETUP_CODE: ${{ secrets.SETUP_CODE }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          supabase secrets set --project-ref "$PROJECT_REF" SETUP_CODE="$SETUP_CODE"
+          supabase secrets set SETUP_CODE="$SETUP_CODE"
           # Assistente (opcional): chave do Gemini, criada de graça no Google AI Studio
           if [ -n "$GEMINI_API_KEY" ]; then
-            supabase secrets set --project-ref "$PROJECT_REF" GEMINI_API_KEY="$GEMINI_API_KEY"
+            supabase secrets set GEMINI_API_KEY="$GEMINI_API_KEY"
           else
             echo "::notice::Sem GEMINI_API_KEY: o assistente fica desligado."
           fi
