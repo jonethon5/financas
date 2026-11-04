@@ -6,7 +6,7 @@ import { categoryIcon } from '../components/CategoryIcon'
 import { Scanner } from '../components/Scanner'
 import { Button, Chip, ErrorBox, Field, NavBar, NavButton, Spinner, Switch, TextArea } from '../components/ui'
 import { useToast } from '../components/Toast'
-import { useCategories, useMonth, useRecurringBills, useSaveExpense } from '../data/hooks'
+import { useCategories, useMonth, useRecurringBills, useSaveExpense, useSaveRecurringBill } from '../data/hooks'
 import { useRepo } from '../data/repo'
 import { useHousehold } from '../household/HouseholdProvider'
 import { onlyDigits, parseBillCode, formatBillCode, type BillCode } from '../lib/barcode'
@@ -29,6 +29,8 @@ type FormState = {
   categoryId: string | null
   amount: string
   dueDate: string
+  /** Vence sempre no mesmo dia: vira conta fixa e é lançada sozinha nos próximos meses */
+  repeat: boolean
   expenseDate: string
   paid: boolean
   paidBy: string | null
@@ -53,6 +55,7 @@ function initialState(expense: Expense | undefined, memberIds: string[], meId: s
       categoryId: null,
       amount: '',
       dueDate: '',
+      repeat: false,
       expenseDate: monthIso,
       paid: false,
       paidBy: meId,
@@ -71,6 +74,7 @@ function initialState(expense: Expense | undefined, memberIds: string[], meId: s
     categoryId: expense.category_id,
     amount: centsToInput(expense.amount_cents),
     dueDate: expense.due_date ?? '',
+    repeat: Boolean(expense.recurring_bill_id),
     expenseDate: expense.expense_date,
     paid: expense.status === 'paid',
     paidBy: expense.paid_by_member_id ?? meId,
@@ -106,6 +110,7 @@ export function ExpenseFormPage() {
   const categories = useCategories()
   const recurring = useRecurringBills()
   const save = useSaveExpense()
+  const saveBill = useSaveRecurringBill()
 
   const expense = id ? month.data?.expenses.find((e) => e.id === id) : undefined
   const recurringBill = expense?.recurring_bill_id ? recurring.data?.find((r) => r.id === expense.recurring_bill_id) : undefined
@@ -256,6 +261,7 @@ export function ExpenseFormPage() {
     else if (amountCents != null && preview.error) errs.split = preview.error
     if (isPercent && amountCents != null && percentSum !== 100) errs.split = `Os percentuais somam ${percentSum}%. Precisam somar 100%.`
     if (form.paid && !form.paidBy) errs.paidBy = 'Escolha quem pagou.'
+    if (form.repeat && !form.dueDate) errs.dueDate = 'Escolha o vencimento para a conta repetir todo mês nesse dia.'
     const pixInfo = parsePix(form.pixCode)
     if (pixInfo && !pixInfo.ok) errs.pix = pixInfo.message
     setErrors(errs)
@@ -277,12 +283,36 @@ export function ExpenseFormPage() {
     }
     setUploading(false)
 
+    // Repetir todo mês: cria (ou ajusta) a conta fixa com o dia do vencimento
+    let recurringId = expense?.recurring_bill_id ?? null
+    const dueDay = form.dueDate ? Number(form.dueDate.slice(8, 10)) : null
+    try {
+      if (form.repeat && dueDay) {
+        if (!recurringId) {
+          recurringId = await saveBill.mutateAsync({
+            description: form.description.trim().slice(0, 80),
+            category_id: form.categoryId,
+            due_day: dueDay,
+            active: true,
+          })
+        } else if (recurringBill && (recurringBill.due_day !== dueDay || !recurringBill.active)) {
+          await saveBill.mutateAsync({ id: recurringId, due_day: dueDay, active: true })
+        }
+      } else if (!form.repeat && recurringId && recurringBill?.active) {
+        // Para de lançar nos próximos meses (a conta deste mês continua)
+        await saveBill.mutateAsync({ id: recurringId, active: false })
+      }
+    } catch (err) {
+      setErrors({ form: friendlyError(err) })
+      return
+    }
+
     const digits = onlyDigits(form.barcode)
     const input: ExpenseInput = {
       id: expense?.id,
       month_id: month.data!.month.id,
       category_id: form.categoryId,
-      recurring_bill_id: expense?.recurring_bill_id ?? null,
+      recurring_bill_id: recurringId,
       description: form.description.trim(),
       amount_cents: amountCents,
       due_date: form.dueDate || null,
@@ -299,7 +329,7 @@ export function ExpenseFormPage() {
     }
     save.mutate(input, {
       onSuccess: (savedId) => {
-        toast(expense ? 'Conta atualizada' : 'Conta lançada')
+        toast(form.repeat && !expense?.recurring_bill_id && dueDay ? `Conta lançada · repete todo dia ${dueDay}` : expense ? 'Conta atualizada' : 'Conta lançada')
         navigate(`/conta/${savedId}?mes=${monthParam(ym)}`, { replace: true })
       },
     })
@@ -316,7 +346,7 @@ export function ExpenseFormPage() {
         left={<NavButton onClick={back}>Cancelar</NavButton>}
         right={
           !closed && (
-            <NavButton type="submit" strong disabled={save.isPending || uploading}>
+            <NavButton type="submit" strong disabled={save.isPending || uploading || saveBill.isPending}>
               Salvar
             </NavButton>
           )
@@ -382,7 +412,7 @@ export function ExpenseFormPage() {
                       {codeInfo.kind === 'boleto' ? 'Boleto bancário' : codeInfo.segmentLabel} válido
                       {codeInfo.amountCents != null && ` · ${formatBRL(codeInfo.amountCents)}`}
                       {codeInfo.dueDate && ` · vence ${formatDate(codeInfo.dueDate)}`}
-                      {codeInfo.kind === 'arrecadacao' && codeInfo.valueIsReference && ' · o valor do código é só de referência, confira na conta'}
+                      {codeInfo.kind === 'arrecadacao' && codeInfo.valueIsReference && ' · confira se o valor bate com a conta'}
                       {codeInfo.kind === 'arrecadacao' && !codeInfo.dueDate && ' · preencha o vencimento'}
                     </span>
                   </span>
@@ -476,6 +506,19 @@ export function ExpenseFormPage() {
               />
             </div>
             <div className={rowCls}>
+              <div className="min-w-0 flex-1 py-2">
+                <p className="text-[1.0625rem]">Repetir todo mês</p>
+                <p className="text-[0.8125rem] text-muted">
+                  {form.repeat
+                    ? form.dueDate
+                      ? `Lançada sozinha todo dia ${Number(form.dueDate.slice(8, 10))}`
+                      : 'Escolha o vencimento acima'
+                    : 'Para contas que vencem sempre no mesmo dia'}
+                </p>
+              </div>
+              <Switch checked={form.repeat} onChange={(v) => set('repeat', v)} label="Repetir todo mês" />
+            </div>
+            <div className={rowCls}>
               <span className="flex-1 text-[1.0625rem]">Já está paga</span>
               <Switch checked={form.paid} onChange={(v) => set('paid', v)} label="Já está paga" />
             </div>
@@ -500,9 +543,9 @@ export function ExpenseFormPage() {
               </div>
             )}
           </div>
-          {errors.description && (
+          {(errors.description || errors.dueDate) && (
             <p role="alert" className="mt-1.5 px-1 text-[0.875rem] font-medium text-danger">
-              {errors.description}
+              {errors.description ?? errors.dueDate}
             </p>
           )}
         </div>
@@ -645,7 +688,7 @@ export function ExpenseFormPage() {
         {(errors.form || save.error) && <ErrorBox message={errors.form ?? friendlyError(save.error)} />}
 
         <div className="pb-safe sticky bottom-3 z-10">
-          <Button type="submit" className="w-full shadow-[0_8px_24px_-8px_rgb(74_144_164/0.6)]" loading={save.isPending || uploading}>
+          <Button type="submit" className="w-full shadow-[0_8px_24px_-8px_rgb(74_144_164/0.6)]" loading={save.isPending || uploading || saveBill.isPending}>
             {expense ? 'Salvar' : 'Lançar conta'}
           </Button>
         </div>

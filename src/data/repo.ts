@@ -38,7 +38,8 @@ export interface Repo {
 
   getCategories(): Promise<Category[]>
   getRecurringBills(): Promise<RecurringBill[]>
-  saveRecurringBill(input: RecurringBillInput): Promise<void>
+  /** Cria ou altera uma conta fixa. Devolve o id. */
+  saveRecurringBill(input: RecurringBillInput): Promise<string>
 
   /** Abre o mês (cria com as contas fixas se ainda não existir). */
   openMonth(ym: YearMonth): Promise<MonthBundle>

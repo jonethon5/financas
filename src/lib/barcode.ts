@@ -184,7 +184,9 @@ export const SEGMENTS: Record<number, string> = {
 
 function parseArrecadacao(digits: string, today: Date): BillCode {
   // 3º dígito (identificador de valor): 6/7 → DV módulo 10; 8/9 → módulo 11.
-  // 6 e 8 = valor efetivo em reais; 7 e 9 = quantidade de moeda / valor de referência (padrão FEBRABAN).
+  // 6 e 8 = valor efetivo em reais; 7 e 9 = "quantidade de moeda / valor de referência" (padrão FEBRABAN).
+  // Na prática muitas empresas usam 7/9 com o valor da conta em reais (os apps de banco mostram esse valor),
+  // então o valor também é preenchido nesses casos, com o aviso para conferir.
   const valueId = Number(digits[2])
   if (![6, 7, 8, 9].includes(valueId)) return invalid()
   const dvFn = valueId === 6 || valueId === 7 ? mod10 : mod11Arrecadacao
@@ -213,7 +215,7 @@ function parseArrecadacao(digits: string, today: Date): BillCode {
     barcode,
     segment,
     segmentLabel: SEGMENTS[segment] ?? 'Conta de consumo',
-    amountCents: isReais && amount > 0 ? amount : null,
+    amountCents: amount > 0 ? amount : null,
     valueIsReference: !isReais,
     // O vencimento normalmente não vem no código; alguns emissores colocam AAAAMMDD no início do campo livre.
     dueDate: isoFromYmd(barcode.slice(19, 27), today),

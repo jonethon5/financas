@@ -105,7 +105,7 @@ export function ExpenseDetailPage() {
       </span>
     ) : (
       <span className={state === 'overdue' ? 'font-medium text-danger' : state === 'today' ? 'font-medium' : ''}>
-        {expense.due_date ? `${dueLabel(expense, today)} · ${formatDate(expense.due_date)}` : 'Pendente'}
+        {expense.due_date ? (dueLabel(expense, today).includes('/') ? `Vence ${formatDate(expense.due_date)}` : `${dueLabel(expense, today)} · ${formatDate(expense.due_date)}`) : 'Pendente'}
       </span>
     )
 

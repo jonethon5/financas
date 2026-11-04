@@ -239,10 +239,11 @@ export const localRepo: Repo = {
 
   async saveRecurringBill({ id: billId, ...values }) {
     const s = db()
+    const newId = billId ?? id()
     if (billId) Object.assign(s.recurring.find((r) => r.id === billId)!, values)
     else
       s.recurring.push({
-        id: id(),
+        id: newId,
         category_id: null,
         description: 'Conta',
         provider: null,
@@ -256,6 +257,7 @@ export const localRepo: Repo = {
         ...values,
       })
     commit()
+    return newId
   },
 
   async openMonth(ym) {

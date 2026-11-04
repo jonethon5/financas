@@ -66,10 +66,10 @@ export const supabaseRepo: Repo = {
   async saveRecurringBill({ id, ...values }) {
     if (id) {
       check(await supabase.from('recurring_bills').update(values).eq('id', id))
-    } else {
-      const household_id = check(await supabase.rpc('my_household_id'))
-      check(await supabase.from('recurring_bills').insert({ ...values, household_id }))
+      return id
     }
+    const household_id = check(await supabase.rpc('my_household_id'))
+    return check(await supabase.from('recurring_bills').insert({ ...values, household_id }).select('id').single()).id as string
   },
 
   async openMonth({ year, month }) {

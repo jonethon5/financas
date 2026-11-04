@@ -98,7 +98,8 @@ describe('conta de consumo (arrecadação)', () => {
   })
 
   it('valor de referência (identificador 7) não é preenchido', () => {
-    expect(parseBillCode(VIVO_7, TODAY)).toMatchObject({ ok: true, segment: 4, amountCents: null, valueIsReference: true })
+    // 7 = valor de referência pelo padrão, mas na prática traz o valor da conta: preenche e pede para conferir
+    expect(parseBillCode(VIVO_7, TODAY)).toMatchObject({ ok: true, segment: 4, amountCents: 15000, valueIsReference: true })
   })
 
   it('detecta bloco com dígito errado', () => {
