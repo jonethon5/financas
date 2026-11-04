@@ -9,8 +9,9 @@ Funciona no navegador do computador e pode ser instalado no celular.
 - **Alertas de vencimento** na tela e notificação no celular (3 dias antes, 1 dia antes, no dia — você escolhe).
 - **Divisão** igual, por percentual ou por valores, sempre fechando no centavo.
 - **Histórico**, comparação com o mês anterior e **fechamento do mês**.
+- **Assistente** (Gemini): pergunte "quem deve para quem?" ou "quanto gastamos de luz?". Só consulta, 20 perguntas por dia.
 
-**Tudo gratuito:** Supabase (plano Free), GitHub Pages e GitHub Actions. Nenhum pede cartão de crédito.
+**Tudo gratuito:** Supabase (plano Free), GitHub Pages, GitHub Actions e Gemini (Google AI Studio). Nenhum pede cartão de crédito.
 
 > ⚠️ Este repositório é **público**. Nunca coloque aqui senhas, o arquivo `.env`, chaves Pix, códigos de cliente
 > ou valores reais. Os dados da casa ficam só no banco do Supabase, protegidos por Row Level Security (RLS).
@@ -27,7 +28,7 @@ guardados só no próprio aparelho. Dá para testar tudo (lançar, marcar como p
 - [x] 3. Histórico, comparativo com o mês anterior e fechamento do mês *(tela "Ano" vem na etapa 5)*
 - [ ] 4. Acerto entre moradores, WhatsApp e exportar
 - [ ] 5. Gráficos e tela do ano *(lembretes com o app fechado já estão prontos)*
-- [ ] 6. Assistente de IA (Gemini via Edge Function)
+- [x] 6. Assistente de IA (Gemini via Edge Function)
 
 ---
 
@@ -56,6 +57,7 @@ No repositório: **Settings → Secrets and variables → Actions → New reposi
 | `SUPABASE_ACCESS_TOKEN` | o token do passo 1.4 |
 | `SUPABASE_DB_PASSWORD` | a senha do banco do passo 1.2 |
 | `SETUP_CODE` | invente um código qualquer (ex.: `casa-2026-xyz`). Ele protege a primeira configuração. |
+| `GEMINI_API_KEY` | *(opcional, para o assistente)* chave criada em <https://aistudio.google.com/apikey> → **Create API key**. Grátis, sem cartão. |
 
 ### 3. Rodar os workflows
 
@@ -78,6 +80,21 @@ Esqueceu a senha? O administrador cria uma nova em **Ajustes → Moradores → (
 > usuário (`maria@moradores.financas.local`). Ele nunca recebe mensagens e ninguém precisa saber dele.
 
 ---
+
+## Assistente (Gemini)
+
+A tela **Perguntar** responde dúvidas sobre as contas ("quanto cada um paga?", "quem deve para quem?",
+"quanto gastamos de luz nos últimos 3 meses?").
+
+- A chave `GEMINI_API_KEY` fica só nos secrets das Edge Functions (o workflow "Supabase" copia do GitHub). Nunca no app.
+- A função `ask` lê só os dados da casa de quem pergunta e manda para o Gemini um resumo com nomes/apelidos,
+  contas, valores, vencimentos, quem pagou e a divisão. **Não manda** chave Pix, código de barras, Pix copia e cola,
+  código do cliente, observações, anexos nem usuários.
+- O assistente só consulta: não lança, não paga, não manda mensagens.
+- Limite de **20 perguntas por pessoa por dia** (tabela `ai_usage`, contada no horário de Brasília).
+- Modelo: `gemini-flash-latest` (o Google mantém esse nome apontando para o Flash mais recente). Para trocar,
+  crie o secret de função `GEMINI_MODEL` no painel do Supabase (Edge Functions → Secrets).
+- No plano gratuito do Gemini, o Google pode usar as perguntas para melhorar os produtos dele.
 
 ## Publicar no GitHub Pages
 
@@ -165,6 +182,7 @@ src/
 supabase/
   migrations/     banco (tabelas, RLS, funções)
   functions/      Edge Functions: setup (primeira configuração), admin-users (acessos),
-                  push (inscrição/teste de notificações) e send-reminders (avisos do dia)
+                  push (inscrição/teste de notificações), send-reminders (avisos do dia)
+                  e ask (assistente com o Gemini)
 .github/workflows deploy no Pages, Supabase, avisos diários e keepalive
 ```

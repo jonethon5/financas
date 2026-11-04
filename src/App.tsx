@@ -12,7 +12,7 @@ import { ExpenseDetailPage } from './pages/ExpenseDetailPage'
 import { ExpenseFormPage } from './pages/ExpenseFormPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage'
-import { AskPage } from './pages/Placeholders'
+import { AskPage } from './pages/AskPage'
 
 function AppRoutes() {
   return (

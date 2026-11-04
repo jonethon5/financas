@@ -1,7 +1,7 @@
 name: Supabase (banco e funções)
 
 # Aplica o banco (supabase/migrations), publica as Edge Functions (supabase/functions),
-# define o secret SETUP_CODE das funções e desativa o cadastro público.
+# define os secrets das funções (SETUP_CODE e GEMINI_API_KEY) e desativa o cadastro público.
 # Roda sozinho quando algo em supabase/ muda, ou manualmente em Actions › Run workflow.
 on:
   push:
@@ -66,7 +66,15 @@ jobs:
       - name: Secrets das funções
         env:
           SETUP_CODE: ${{ secrets.SETUP_CODE }}
-        run: supabase secrets set --project-ref "$PROJECT_REF" SETUP_CODE="$SETUP_CODE"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          supabase secrets set --project-ref "$PROJECT_REF" SETUP_CODE="$SETUP_CODE"
+          # Assistente (opcional): chave do Gemini, criada de graça no Google AI Studio
+          if [ -n "$GEMINI_API_KEY" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" GEMINI_API_KEY="$GEMINI_API_KEY"
+          else
+            echo "::notice::Sem GEMINI_API_KEY: o assistente fica desligado."
+          fi
 
       - name: Desativar cadastro público
         run: |
