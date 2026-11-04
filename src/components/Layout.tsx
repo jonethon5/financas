@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, Link, useLocation, useSearchParams } from 'react-router'
-import { History, Home, MessageCircleQuestion, Plus, Settings, WifiOff, Smartphone } from 'lucide-react'
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
+import { ChartColumn, House, MessageCircle, Plus, Settings, WifiOff } from 'lucide-react'
 import { useHousehold } from '../household/HouseholdProvider'
-import { Avatar, displayName } from './Avatar'
+import { parseMonthParam } from '../pages/HomePage'
+import { AddSheet } from './AddSheet'
 
 const NAV = [
-  { to: '/', label: 'Início', icon: Home },
-  { to: '/historico', label: 'Histórico', icon: History },
-  { to: '/perguntar', label: 'Perguntar', icon: MessageCircleQuestion },
+  { to: '/', label: 'Início', icon: House },
+  { to: '/historico', label: 'Histórico', icon: ChartColumn },
+  { to: '/perguntar', label: 'Perguntar', icon: MessageCircle },
   { to: '/ajustes', label: 'Ajustes', icon: Settings },
 ]
 
@@ -32,120 +33,84 @@ function NavItem({ to, label, icon: Icon }: (typeof NAV)[number]) {
       to={to}
       end={to === '/'}
       className={({ isActive }) =>
-        `flex min-h-[4.25rem] flex-col items-center justify-center gap-1 text-[0.8125rem] font-semibold transition ${
-          isActive ? 'text-primary' : 'text-faint'
+        `flex h-[3.25rem] flex-col items-center justify-center gap-[3px] text-[0.625rem] font-medium tracking-wide transition active:opacity-60 ${
+          isActive ? 'text-primary' : 'text-[#9aa1aa]'
         }`
       }
     >
-      <Icon className="size-[1.625rem]" strokeWidth={1.9} aria-hidden />
-      {label}
+      {({ isActive }) => (
+        <>
+          <Icon className="size-[1.5rem]" strokeWidth={isActive ? 2.1 : 1.8} aria-hidden />
+          {label}
+        </>
+      )}
     </NavLink>
   )
 }
 
+/**
+ * Estrutura de app de celular (também no computador: uma coluna com largura de celular).
+ * Barra de abas translúcida embaixo com o "+" no meio, que abre o menu de lançar.
+ */
 export function Layout() {
-  const { household, me, demo } = useHousehold()
+  const { demo } = useHousehold()
   const online = useOnline()
   const { pathname } = useLocation()
   const [params] = useSearchParams()
-  // O "+" lança a conta no mês que está aberto na tela inicial
-  const newHref = pathname === '/' && params.get('mes') ? `/lancar?mes=${params.get('mes')}` : '/lancar'
+  const [addOpen, setAddOpen] = useState(false)
+  // Formulários ocupam a tela toda (como as telas de "Novo" do iPhone)
+  const fullScreen = pathname.startsWith('/lancar') || pathname.endsWith('/editar') || pathname === '/ajustes/senha'
+  const ym = parseMonthParam(pathname === '/' || pathname.startsWith('/conta') ? params.get('mes') : null)
 
   return (
-    <div className="min-h-dvh md:flex">
-      {/* Desktop: menu lateral */}
-      <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 flex-col border-r border-line bg-surface px-5 py-7 md:flex">
-        <Link to="/" className="mb-9 flex items-center gap-3 px-2">
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="size-10 rounded-xl" />
-          <div className="min-w-0">
-            <p className="font-bold leading-tight">Finanças da Casa</p>
-            <p className="truncate text-sm text-muted">{household.name}</p>
-          </div>
-        </Link>
+    <div className="mx-auto min-h-dvh w-full max-w-[30rem] bg-bg">
+      {demo && (
+        <p className="pt-safe px-4 pt-1.5 text-center text-[0.75rem] font-medium text-muted">Demonstração · os dados ficam só neste aparelho</p>
+      )}
+      {!online && (
+        <div role="status" className="pt-safe flex items-center justify-center gap-2 bg-ink px-4 py-1.5 text-[0.8125rem] font-medium text-white">
+          <WifiOff className="size-4" aria-hidden /> Sem internet · mostrando os últimos dados
+        </div>
+      )}
 
-        <Link
-          to={newHref}
-          className="mb-6 flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-on-primary transition hover:bg-primary-strong"
+      <main className={`px-4 ${fullScreen ? 'pb-10' : 'pb-[calc(6.5rem+env(safe-area-inset-bottom))]'}`}>
+        <div key={pathname} className="animate-page">
+          <Outlet />
+        </div>
+      </main>
+
+      {!fullScreen && (
+        <nav
+          aria-label="Principal"
+          className="pb-safe fixed bottom-0 left-1/2 z-30 w-full max-w-[30rem] -translate-x-1/2 border-t border-black/[0.06] bg-white/85 backdrop-blur-xl backdrop-saturate-150"
         >
-          <Plus className="size-5" strokeWidth={2.5} aria-hidden /> Lançar conta
-        </Link>
-
-        <nav aria-label="Principal" className="flex flex-col gap-1">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold transition ${
-                  isActive ? 'bg-primary-soft text-primary-strong' : 'text-muted hover:bg-surface-2 hover:text-ink'
-                }`
-              }
-            >
-              <Icon className="size-[1.375rem]" strokeWidth={1.9} aria-hidden />
-              {label}
-            </NavLink>
-          ))}
+          <ul className="grid grid-cols-5 items-center px-1">
+            <li>
+              <NavItem {...NAV[0]} />
+            </li>
+            <li>
+              <NavItem {...NAV[1]} />
+            </li>
+            <li className="flex justify-center">
+              <button
+                onClick={() => setAddOpen(true)}
+                aria-label="Lançar conta"
+                className="-mt-6 grid size-[3.5rem] place-items-center rounded-full bg-primary text-white shadow-[0_8px_20px_-6px_rgb(74_144_164/0.65)] transition active:scale-95"
+              >
+                <Plus className="size-7" strokeWidth={2.4} aria-hidden />
+              </button>
+            </li>
+            <li>
+              <NavItem {...NAV[2]} />
+            </li>
+            <li>
+              <NavItem {...NAV[3]} />
+            </li>
+          </ul>
         </nav>
+      )}
 
-        {me && (
-          <Link to="/ajustes" className="mt-auto flex items-center gap-3 rounded-2xl p-2 hover:bg-surface-2">
-            <Avatar member={me} size="md" />
-            <div className="min-w-0">
-              <p className="truncate font-semibold">{displayName(me)}</p>
-              <p className="truncate text-sm text-muted">{me.role === 'admin' ? 'Administrador' : 'Morador'}</p>
-            </div>
-          </Link>
-        )}
-      </aside>
-
-      <div className="min-w-0 flex-1">
-        {demo && (
-          <Link
-            to="/ajustes#demonstracao"
-            className="pt-safe flex items-center justify-center gap-2 bg-primary-soft px-4 py-2 text-sm font-semibold text-primary-strong"
-          >
-            <Smartphone className="size-4" aria-hidden /> Modo demonstração — os dados ficam só neste aparelho
-          </Link>
-        )}
-        {!online && (
-          <div role="status" className="flex items-center justify-center gap-2 bg-ink px-4 py-2 text-sm font-semibold text-bg">
-            <WifiOff className="size-4" aria-hidden /> Sem internet — mostrando os últimos dados salvos
-          </div>
-        )}
-        <main className={`mx-auto w-full max-w-2xl px-4 pb-36 md:px-10 md:pt-10 md:pb-16 ${demo ? 'pt-5' : 'pt-safe'}`}>
-          <div className={demo ? '' : 'pt-5'}>
-            <Outlet />
-          </div>
-        </main>
-      </div>
-
-      {/* Celular: navegação inferior com o "+" no meio */}
-      <nav aria-label="Principal" className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur-xl md:hidden">
-        <ul className="mx-auto grid max-w-lg grid-cols-5 items-end">
-          <li>
-            <NavItem {...NAV[0]} />
-          </li>
-          <li>
-            <NavItem {...NAV[1]} />
-          </li>
-          <li className="flex justify-center">
-            <Link
-              to={newHref}
-              aria-label="Lançar conta"
-              className="-mt-7 mb-2 grid size-[4.25rem] place-items-center rounded-full bg-primary text-on-primary shadow-[0_10px_24px_-6px_color-mix(in_oklab,var(--color-primary)_70%,transparent)] ring-4 ring-bg transition active:scale-95"
-            >
-              <Plus className="size-8" strokeWidth={2.5} aria-hidden />
-            </Link>
-          </li>
-          <li>
-            <NavItem {...NAV[2]} />
-          </li>
-          <li>
-            <NavItem {...NAV[3]} />
-          </li>
-        </ul>
-      </nav>
+      <AddSheet open={addOpen} onClose={() => setAddOpen(false)} ym={ym} />
     </div>
   )
 }

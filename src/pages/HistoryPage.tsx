@@ -39,8 +39,8 @@ export function HistoryPage() {
       ) : (
         <>
           {chart.length > 1 && (
-            <Card className="mb-6">
-              <p className="mb-4 font-semibold text-muted">Últimos {chart.length} meses</p>
+            <Card className="mb-8 !pt-5">
+              <p className="mb-4 text-[0.9375rem] text-muted">Últimos {chart.length} meses</p>
               <div className="flex h-40 items-end gap-1.5" role="img" aria-label="Gráfico do total de cada mês">
                 {chart.map((m, i) => (
                   <Link
@@ -50,10 +50,10 @@ export function HistoryPage() {
                     title={`${MONTH_NAMES[m.month - 1]}/${m.year}: ${formatBRL(m.total_cents)}`}
                   >
                     <div
-                      className={`w-full max-w-10 rounded-lg ${i === chart.length - 1 ? 'bg-primary' : 'bg-primary/25'}`}
+                      className={`w-full max-w-8 rounded-[0.4rem] ${i === chart.length - 1 ? 'bg-primary' : 'bg-[#dfe3e8]'}`}
                       style={{ height: `${Math.max(4, (m.total_cents / max) * 100)}%` }}
                     />
-                    <span className="text-xs text-muted">{MONTH_NAMES[m.month - 1].slice(0, 3)}</span>
+                    <span className="text-[0.6875rem] text-muted">{MONTH_NAMES[m.month - 1].slice(0, 3)}</span>
                   </Link>
                 ))}
               </div>
@@ -61,7 +61,7 @@ export function HistoryPage() {
           )}
 
           {byYear.map(([year, list]) => (
-            <section key={year} className="mb-6">
+            <section key={year} className="mb-8">
               <SectionTitle>{year}</SectionTitle>
               <Card className="overflow-hidden !p-0">
                 <ul className="divide-y divide-line">
@@ -77,21 +77,20 @@ export function HistoryPage() {
                         <Link to={`/?mes=${monthParam(m)}`} className="block px-4 py-4 transition hover:bg-surface-2">
                           <div className="flex items-center gap-3">
                             <div className="min-w-0 flex-1">
-                              <p className="flex items-center gap-2 text-[1.0625rem] font-bold">
+                              <p className="flex items-center gap-2 text-[1.0625rem] font-semibold">
                                 {MONTH_NAMES[m.month - 1]}
                                 {m.status === 'closed' && <Lock className="size-4 text-muted" aria-label="Mês fechado" />}
                               </p>
-                              <p className="text-[0.9375rem] text-muted">
+                              <p className="text-[0.875rem] text-muted">
                                 {even ? `${formatBRL(Math.max(...values))} por pessoa` : shares.length ? 'Divisão variada' : 'Sem valores'}
                                 {m.awaiting > 0 && ` · ${m.awaiting} sem valor`}
                               </p>
                             </div>
                             <div className="text-right">
-                              <Money cents={m.total_cents} className="text-[1.0625rem] font-bold" />
+                              <Money cents={m.total_cents} className="text-[1.0625rem] font-semibold" />
                               {v && v.pct !== 0 && (
-                                <p className={`text-[0.8125rem] font-semibold ${v.pct > 0 ? 'text-danger' : 'text-ok'}`}>
-                                  {v.pct > 0 ? '+' : ''}
-                                  {v.pct}% vs {MONTH_NAMES[prev!.month - 1].slice(0, 3).toLowerCase()}
+                                <p className="num text-[0.75rem] text-muted">
+                                  {v.pct > 0 ? '↑' : '↓'} {Math.abs(v.pct)}% vs {MONTH_NAMES[prev!.month - 1].slice(0, 3).toLowerCase()}
                                 </p>
                               )}
                             </div>

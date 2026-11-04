@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Bell, BellOff, Check, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Shield, Smartphone, UserPlus } from 'lucide-react'
+import { Bell, BellOff, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Shield, Smartphone, UserPlus } from 'lucide-react'
 import { Avatar, MEMBER_COLORS, displayName } from '../components/Avatar'
 import { CategoryIcon } from '../components/CategoryIcon'
 import { Sheet } from '../components/Sheet'
@@ -204,24 +204,6 @@ function MemberSheet({ member, open, onClose }: { member: Member | null; open: b
           maxLength={140}
           autoComplete="off"
         />
-        <fieldset>
-          <legend className="mb-2 font-semibold text-muted">Cor</legend>
-          <div className="flex flex-wrap gap-3">
-            {MEMBER_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, color: c }))}
-                className="grid size-11 place-items-center rounded-full"
-                style={{ backgroundColor: c, boxShadow: form.color === c ? `0 0 0 3px var(--surface), 0 0 0 5px ${c}` : undefined }}
-                aria-label={`Cor ${c}`}
-                aria-pressed={form.color === c}
-              >
-                {form.color === c && <Check className="size-5 text-white" aria-hidden />}
-              </button>
-            ))}
-          </div>
-        </fieldset>
         <Button type="submit" loading={save.isPending} className="mt-1 w-full">
           Salvar
         </Button>
@@ -459,7 +441,7 @@ function RemindersSection() {
   }
 
   return (
-    <section className="mb-7">
+    <section className="mb-8">
       <SectionTitle>Avisos de vencimento</SectionTitle>
       <Card>
         <p className="mb-3 text-muted">Quando avisar você:</p>
@@ -534,11 +516,11 @@ export function SettingsPage() {
     <>
       <PageHeader title="Ajustes" subtitle={household.name} />
 
-      <section className="mb-7">
+      <section className="mb-8">
         <SectionTitle
           action={
             (isAdmin || demo) && (
-              <button onClick={() => setMemberSheet({ open: true, member: null })} className="flex min-h-11 items-center gap-1.5 font-semibold text-primary">
+              <button onClick={() => setMemberSheet({ open: true, member: null })} className="flex min-h-11 items-center gap-1.5 text-[0.9375rem] text-primary">
                 <UserPlus className="size-5" aria-hidden /> Adicionar
               </button>
             )
@@ -552,10 +534,10 @@ export function SettingsPage() {
               <ListButton key={m.id} onClick={() => setMemberSheet({ open: true, member: m })}>
                 <Avatar member={m} />
                 <div className="min-w-0 flex-1">
-                  <p className={`truncate font-semibold ${m.active ? '' : 'text-muted line-through'}`}>
+                  <p className={`truncate text-[1.0625rem] ${m.active ? '' : 'text-muted line-through'}`}>
                     {displayName(m)} {m.id === me?.id && <span className="font-normal text-muted">(você)</span>}
                   </p>
-                  <p className="truncate text-[0.9375rem] text-muted">
+                  <p className="truncate text-[0.875rem] text-muted">
                     {!m.active ? 'Desativado' : m.username ? `Usuário: ${m.username}${m.role === 'admin' ? ' · admin' : ''}` : 'Sem acesso ao app'}
                   </p>
                 </div>
@@ -566,10 +548,10 @@ export function SettingsPage() {
         {isAdmin && !demo && <p className="mt-2 px-1 text-[0.9375rem] text-muted">Toque em um morador para criar o usuário e a senha dele.</p>}
       </section>
 
-      <section className="mb-7">
+      <section className="mb-8">
         <SectionTitle
           action={
-            <button onClick={() => setBillSheet({ open: true, bill: null })} className="flex min-h-11 items-center gap-1.5 font-semibold text-primary">
+            <button onClick={() => setBillSheet({ open: true, bill: null })} className="flex min-h-11 items-center gap-1.5 text-[0.9375rem] text-primary">
               <Plus className="size-5" aria-hidden /> Adicionar
             </button>
           }
@@ -582,8 +564,8 @@ export function SettingsPage() {
               <ListButton key={b.id} onClick={() => setBillSheet({ open: true, bill: b })}>
                 <CategoryIcon category={categories.data?.find((c) => c.id === b.category_id)} />
                 <div className="min-w-0 flex-1">
-                  <p className={`truncate font-semibold ${b.active ? '' : 'text-muted line-through'}`}>{b.description}</p>
-                  <p className="truncate text-[0.9375rem] text-muted">
+                  <p className={`truncate text-[1.0625rem] ${b.active ? '' : 'text-muted line-through'}`}>{b.description}</p>
+                  <p className="truncate text-[0.875rem] text-muted">
                     {[b.provider, `vence dia ${b.due_day}`, b.default_amount_cents != null ? formatBRL(b.default_amount_cents) : null].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -595,15 +577,15 @@ export function SettingsPage() {
 
       <RemindersSection />
 
-      <section className="mb-7">
+      <section className="mb-8">
         <SectionTitle>Minha conta</SectionTitle>
         <Card className="overflow-hidden !p-0">
           {me && (
             <div className="flex items-center gap-3.5 border-b border-line px-4 py-3.5 last:border-0">
               <Avatar member={me} />
               <div className="min-w-0">
-                <p className="truncate font-semibold">{displayName(me)}</p>
-                <p className="truncate text-[0.9375rem] text-muted">{demo ? 'Modo demonstração' : `Usuário: ${me.username}`}</p>
+                <p className="truncate text-[1.0625rem]">{displayName(me)}</p>
+                <p className="truncate text-[0.875rem] text-muted">{demo ? 'Modo demonstração' : `Usuário: ${me.username}`}</p>
               </div>
             </div>
           )}
@@ -611,12 +593,12 @@ export function SettingsPage() {
             <>
               <Link to="/ajustes/senha" className="flex items-center gap-3.5 border-b border-line px-4 py-4 transition hover:bg-surface-2">
                 <KeyRound className="size-[1.375rem] text-muted" aria-hidden />
-                <span className="flex-1 font-semibold">Trocar minha senha</span>
+                <span className="flex-1 text-[1.0625rem]">Trocar minha senha</span>
                 <ChevronRight className="size-5 text-faint" aria-hidden />
               </Link>
               <button onClick={signOut} className="flex w-full items-center gap-3.5 px-4 py-4 text-left text-danger transition hover:bg-surface-2">
                 <LogOut className="size-[1.375rem]" aria-hidden />
-                <span className="font-semibold">Sair</span>
+                <span className="text-[1.0625rem]">Sair</span>
               </button>
             </>
           )}
@@ -624,7 +606,7 @@ export function SettingsPage() {
       </section>
 
       {!standalone && (
-        <section className="mb-7">
+        <section className="mb-8">
           <SectionTitle>Instalar no celular</SectionTitle>
           <Card>
             <div className="flex gap-4">

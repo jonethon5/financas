@@ -23,8 +23,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-50">
         {message && (
-          <div className="animate-toast absolute bottom-[calc(7rem+env(safe-area-inset-bottom))] left-1/2 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full bg-ink px-5 py-3 font-semibold text-bg shadow-lg md:bottom-8">
-            <CheckCircle2 className="size-5 shrink-0 text-ok" aria-hidden />
+          <div className="animate-toast absolute bottom-[calc(6.5rem+env(safe-area-inset-bottom))] left-1/2 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full bg-ink/90 px-5 py-3 text-[0.9375rem] font-medium text-white shadow-lg backdrop-blur-xl">
+            <CheckCircle2 className="size-5 shrink-0 text-[#5fd39b]" aria-hidden />
             {message}
           </div>
         )}

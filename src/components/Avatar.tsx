@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import type { Member } from '../types'
 
 export function displayName(m: Pick<Member, 'name' | 'nickname'>): string {
@@ -12,15 +11,11 @@ export function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-/** Avatar com fundo tingido e iniciais na cor do morador. */
+/** Avatar com as iniciais em azul sobre cinza (igual ao print de referência). */
 export function Avatar({ member, size = 'md' }: { member: Pick<Member, 'name' | 'nickname' | 'color'>; size?: 'sm' | 'md' | 'lg' }) {
-  const sizes = { sm: 'size-8 text-[0.8125rem]', md: 'size-11 text-base', lg: 'size-14 text-lg' }
+  const sizes = { sm: 'size-7 text-[0.75rem]', md: 'size-10 text-[0.9375rem]', lg: 'size-12 text-[1.0625rem]' }
   return (
-    <span
-      aria-hidden
-      style={{ '--c': member.color } as CSSProperties}
-      className={`inline-grid shrink-0 place-items-center rounded-full font-bold ${sizes[size]} bg-[color-mix(in_oklab,var(--c)_15%,transparent)] text-[color-mix(in_oklab,var(--c)_85%,black)]`}
-    >
+    <span aria-hidden className={`inline-grid shrink-0 place-items-center rounded-full bg-[#e9ecf1] font-semibold text-primary-strong ${sizes[size]}`}>
       {initials(displayName(member))}
     </span>
   )

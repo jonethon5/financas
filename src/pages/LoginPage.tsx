@@ -12,11 +12,11 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
     <div className="pt-safe flex min-h-dvh items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="mx-auto mb-5 size-20 rounded-[1.4rem] shadow-soft" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="mx-auto mb-5 size-[4.5rem] rounded-[1.1rem] shadow-soft" />
           <h1 className="text-[1.875rem] leading-tight font-bold tracking-tight">{title}</h1>
           {subtitle && <p className="mt-2 text-lg text-muted">{subtitle}</p>}
         </div>
-        <div className="shadow-soft rounded-3xl border border-line/70 bg-surface p-6">{children}</div>
+        <div className="shadow-soft rounded-[1.25rem] bg-surface p-5">{children}</div>
       </div>
     </div>
   )

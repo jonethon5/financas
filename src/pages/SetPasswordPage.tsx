@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { ChevronLeft } from 'lucide-react'
-import { Button, Card, ErrorBox } from '../components/ui'
+import { BackButton, Button, Card, ErrorBox, NavBar } from '../components/ui'
 import { useToast } from '../components/Toast'
 import { friendlyError, supabase } from '../lib/supabase'
 import { PasswordField } from './LoginPage'
@@ -34,16 +33,8 @@ export function SetPasswordPage() {
 
   return (
     <>
-      <header className="mb-5 flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="grid size-12 place-items-center rounded-full border border-line/70 bg-surface shadow-soft"
-          aria-label="Voltar"
-        >
-          <ChevronLeft className="size-6" aria-hidden />
-        </button>
-        <h1 className="text-[1.625rem] font-bold tracking-tight">Trocar minha senha</h1>
-      </header>
+      <NavBar large={false} title="Trocar minha senha" left={<BackButton label="Ajustes" onClick={() => navigate(-1)} />} />
+      <div className="h-4" />
       <Card>
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
           {error && <ErrorBox message={error} />}
