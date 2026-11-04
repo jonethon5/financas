@@ -183,7 +183,8 @@ async function callModel(model: string, apiKey: string, context: string, history
           ...history.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
           { role: 'user', parts: [{ text: question }] },
         ],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
+        // Limite alto: nos modelos que "pensam" antes de responder, o pensamento também conta aqui
+        generationConfig: { temperature: 0.2, maxOutputTokens: 16384 },
       }),
     })
   } catch (err) {
@@ -215,7 +216,12 @@ async function callModel(model: string, apiKey: string, context: string, history
     .map((p: { text?: string }) => p.text ?? '')
     .join('')
     .trim()
-  if (!text) throw new UserError('O assistente não conseguiu responder essa. Tente perguntar de outro jeito.', 502)
+  if (!text) {
+    // Sem texto: o modelo gastou o limite "pensando" (MAX_TOKENS) ou o Google bloqueou (SAFETY, blockReason…)
+    const reason = data?.promptFeedback?.blockReason ?? data?.candidates?.[0]?.finishReason ?? 'sem resposta'
+    console.error('gemini vazio', model, JSON.stringify(data).slice(0, 500))
+    throw new UserError(`O assistente não conseguiu responder essa. Tente perguntar de outro jeito. (Google: ${reason})`, 502)
+  }
   return text
 }
 
