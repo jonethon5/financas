@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Bell, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Shield, UserPlus } from 'lucide-react'
+import { Bell, ChevronRight, KeyRound, LogOut, Plus, RotateCcw, Send, Shield, UserPlus } from 'lucide-react'
 import { Avatar, MEMBER_COLORS, displayName } from '../components/Avatar'
 import { CategoryIcon } from '../components/CategoryIcon'
 import { Sheet } from '../components/Sheet'
 import { Badge, Button, Card, Chip, ErrorBox, Field, IconTile, List, PageHeader, Row, SectionTitle, Switch } from '../components/ui'
-import { useToast } from '../components/Toast'
+import { copyText, useToast } from '../components/Toast'
 import { useAuth } from '../auth/AuthProvider'
 import { useCategories, useManageLogin, useRecurringBills, useSaveMember, useSaveRecurringBill } from '../data/hooks'
 import { resetDemo } from '../data/localRepo'
@@ -14,6 +14,7 @@ import { centsToInput, formatBRL, parseBRL } from '../lib/money'
 import { isValidUsername, normalizeUsername, suggestUsername } from '../lib/login'
 import { notificationsSupported, REMINDER_DAYS, remindersOff, setRemindersOff } from '../lib/notify'
 import { currentPushSubscription, disablePush, enablePush, pushSupported } from '../lib/push'
+import { createInvite, inviteMessage, type Invite } from '../lib/invite'
 import { friendlyError } from '../lib/supabase'
 import type { Member, RecurringBill } from '../types'
 import { PasswordField } from './LoginPage'
@@ -94,7 +95,7 @@ function LoginSection({ member }: { member: Member }) {
         <div>
           <p className="font-semibold">Acesso ao app</p>
           <p className="text-muted">
-            Usuário: <strong className="text-ink">{member.username}</strong>
+            {member.username ? 'Usuário' : 'E-mail'}: <strong className="text-ink">{member.username ?? member.login_email}</strong>
           </p>
         </div>
         {member.role === 'admin' && <Badge tone="primary">Administrador</Badge>}
@@ -373,6 +374,95 @@ function RecurringSheet({ bill, open, onClose }: { bill: RecurringBill | null; o
 }
 
 // ---------------------------------------------------------------------------
+// Convite para outra casa
+// ---------------------------------------------------------------------------
+
+function InviteSection() {
+  const toast = useToast()
+  const [open, setOpen] = useState(false)
+  const [invite, setInvite] = useState<Invite | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const appUrl = `${window.location.origin}${import.meta.env.BASE_URL}`
+
+  async function generate() {
+    setBusy(true)
+    setError(null)
+    try {
+      setInvite(await createInvite())
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function share() {
+    if (!invite) return
+    const text = inviteMessage(invite, appUrl)
+    if (navigator.share) {
+      try {
+        await navigator.share({ text })
+        return
+      } catch {
+        // cancelou ou não suportado: copia
+      }
+    }
+    if (await copyText(text)) toast('Convite copiado')
+  }
+
+  return (
+    <section className="mb-8">
+      <List>
+        <Row
+          onClick={() => {
+            setInvite(null)
+            setError(null)
+            setOpen(true)
+          }}
+          icon={
+            <IconTile>
+              <Send strokeWidth={1.8} />
+            </IconTile>
+          }
+          title="Convidar outra casa"
+          subtitle="Um amigo cria a casa dele, separada da sua"
+          chevron
+        />
+      </List>
+
+      <Sheet open={open} onClose={() => setOpen(false)} title="Convidar outra casa">
+        <p className="text-[0.9375rem] text-muted">
+          Quem receber o código cria uma casa nova, vazia, e entra com o próprio e-mail e senha. Ninguém de lá vê os dados daqui, e
+          ninguém daqui vê os de lá.
+        </p>
+        {error && (
+          <div className="mt-4">
+            <ErrorBox message={error} />
+          </div>
+        )}
+        {invite ? (
+          <>
+            <div className="shadow-soft mt-5 rounded-[1.25rem] bg-surface p-5 text-center">
+              <p className="text-[0.875rem] text-muted">Código do convite</p>
+              <p className="num mt-1 text-[2rem] font-bold tracking-[0.12em]">{invite.code}</p>
+              <p className="mt-1 text-[0.8125rem] text-muted">Vale até {new Date(invite.expires_at).toLocaleDateString('pt-BR')} · uso único</p>
+            </div>
+            <Button className="mt-5 w-full" onClick={share}>
+              <Send className="size-5" strokeWidth={1.8} aria-hidden /> Enviar convite
+            </Button>
+          </>
+        ) : (
+          <Button className="mt-5 w-full" loading={busy} onClick={generate}>
+            Gerar código de convite
+          </Button>
+        )}
+      </Sheet>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Avisos
 // ---------------------------------------------------------------------------
 
@@ -498,7 +588,7 @@ export function SettingsPage() {
                     {displayName(m)} {m.id === me?.id && <span className="font-normal text-muted">(você)</span>}
                   </p>
                   <p className="truncate text-[0.875rem] text-muted">
-                    {!m.active ? 'Desativado' : m.username ? `Usuário: ${m.username}${m.role === 'admin' ? ' · admin' : ''}` : 'Sem acesso ao app'}
+                    {!m.active ? 'Desativado' : m.username || m.login_email ? `${m.username ? `Usuário: ${m.username}` : m.login_email}${m.role === 'admin' ? ' · admin' : ''}` : 'Sem acesso ao app'}
                   </p>
                 </div>
               </ListButton>
@@ -537,6 +627,8 @@ export function SettingsPage() {
 
       <RemindersSection />
 
+      {isAdmin && !demo && <InviteSection />}
+
       <section className="mb-8">
         <SectionTitle>Minha conta</SectionTitle>
         <Card className="overflow-hidden !p-0">
@@ -545,7 +637,7 @@ export function SettingsPage() {
               <Avatar member={me} />
               <div className="min-w-0">
                 <p className="truncate text-[1.0625rem]">{displayName(me)}</p>
-                <p className="truncate text-[0.875rem] text-muted">{demo ? 'Modo demonstração' : `Usuário: ${me.username}`}</p>
+                <p className="truncate text-[0.875rem] text-muted">{demo ? 'Modo demonstração' : me.username ? `Usuário: ${me.username}` : me.login_email}</p>
               </div>
             </div>
           )}

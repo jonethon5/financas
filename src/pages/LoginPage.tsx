@@ -4,8 +4,8 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Button, ErrorBox, Field } from '../components/ui'
 import { useAuth } from '../auth/AuthProvider'
 import { friendlyError, supabase } from '../lib/supabase'
-import { isValidUsername, normalizeUsername } from '../lib/login'
-import { SetupPage } from './SetupPage'
+import { isValidLogin } from '../lib/login'
+import { InvitePage, SetupPage } from './SetupPage'
 
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
@@ -61,7 +61,7 @@ export function LoginPage() {
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [setup, setSetup] = useState(false)
+  const [setup, setSetup] = useState<'setup' | 'invite' | null>(null)
   const configured = useQuery({
     queryKey: ['is_configured'],
     queryFn: async () => {
@@ -71,13 +71,14 @@ export function LoginPage() {
     },
   })
 
-  if (setup) return <SetupPage onBack={() => setSetup(false)} />
+  if (setup === 'setup') return <SetupPage onBack={() => setSetup(null)} />
+  if (setup === 'invite') return <InvitePage onBack={() => setSetup(null)} />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    const u = normalizeUsername(username)
+    const u = username.trim()
     const errs: typeof errors = {}
-    if (!isValidUsername(u)) errs.username = 'Digite seu usuário (ex.: maria).'
+    if (!isValidLogin(u)) errs.username = 'Digite seu usuário (ex.: maria) ou seu e-mail.'
     if (!password) errs.password = 'Digite sua senha.'
     setErrors(errs)
     if (Object.keys(errs).length) return
@@ -97,12 +98,12 @@ export function LoginPage() {
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         {error && <ErrorBox message={error} />}
         <Field
-          label="Usuário"
+          label="Usuário ou e-mail"
           autoComplete="username"
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="ex.: maria"
+          placeholder="ex.: maria ou voce@email.com"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           error={errors.username}
@@ -113,9 +114,13 @@ export function LoginPage() {
         </Button>
       </form>
       <p className="mt-5 text-center text-muted">Esqueceu a senha? Peça para o administrador da casa criar uma nova.</p>
-      {configured.data === false && (
-        <Button variant="ghost" size="md" className="mt-3 w-full" onClick={() => setSetup(true)}>
+      {configured.data === false ? (
+        <Button variant="ghost" size="md" className="mt-3 w-full" onClick={() => setSetup('setup')}>
           Primeira vez? Configurar o app
+        </Button>
+      ) : (
+        <Button variant="ghost" size="md" className="mt-3 w-full" onClick={() => setSetup('invite')}>
+          Recebeu um convite? Criar sua casa
         </Button>
       )}
     </AuthShell>

@@ -76,6 +76,16 @@ No repositório: **Settings → Secrets and variables → Actions → New reposi
 
 Esqueceu a senha? O administrador cria uma nova em **Ajustes → Moradores → (pessoa) → Trocar senha**.
 
+### Convidar outra casa (amigos)
+
+Em **Ajustes → Convidar outra casa**, o administrador gera um código (vale 7 dias, uso único, no máximo 5 em aberto).
+Quem recebe abre o app → **Recebeu um convite? Criar sua casa** → digita o código, o e-mail e uma senha, e ganha uma
+casa **nova e vazia**, da qual é administrador. As casas não enxergam os dados umas das outras (RLS). O login aceita
+usuário ou e-mail. O cadastro público continua desligado: sem convite ninguém cria conta.
+
+> Quem entra com e-mail e esquece a senha: como o app não envia e-mails, a senha é trocada pelo painel do Supabase
+> (Authentication → Users → o e-mail → Reset password / Update user).
+
 > Como funciona sem e-mail: o Supabase Auth exige um e-mail, então o app usa um endereço interno derivado do
 > usuário (`maria@moradores.financas.local`). Ele nunca recebe mensagens e ninguém precisa saber dele.
 

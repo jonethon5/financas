@@ -8,6 +8,8 @@ export type Member = {
   household_id: string
   user_id: string | null
   username: string | null
+  /** E-mail de login (só de quem criou a casa por convite) */
+  login_email?: string | null
   role: 'admin' | 'member'
   name: string
   nickname: string | null

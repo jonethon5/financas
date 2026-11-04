@@ -20,6 +20,25 @@ export function loginEmail(username: string): string {
   return `${normalizeUsername(username)}@${LOGIN_EMAIL_DOMAIN}`
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_RE.test(email.trim())
+}
+
+/**
+ * O login aceita usuário (moradores criados pelo administrador) ou e-mail (quem criou a casa por convite).
+ * Devolve o e-mail que vai para o Supabase Auth.
+ */
+export function authEmail(identifier: string): string {
+  const id = identifier.trim()
+  return id.includes('@') ? id.toLowerCase() : loginEmail(id)
+}
+
+export function isValidLogin(identifier: string): boolean {
+  return identifier.includes('@') ? isValidEmail(identifier) : isValidUsername(normalizeUsername(identifier))
+}
+
 /** Sugestão de usuário a partir do nome: "Maria Aparecida" → "maria" */
 export function suggestUsername(name: string): string {
   return normalizeUsername(name.split(/\s+/)[0] ?? '').replace(/[^a-z0-9._-]/g, '')

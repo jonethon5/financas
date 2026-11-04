@@ -2,12 +2,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
-import { loginEmail } from '../lib/login'
+import { authEmail } from '../lib/login'
 
 type AuthState = {
   session: Session | null
   loading: boolean
-  signIn: (username: string, password: string) => Promise<void>
+  /** Usuário ou e-mail */
+  signIn: (login: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -31,8 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthState = {
     session,
     loading,
-    async signIn(username, password) {
-      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail(username), password })
+    async signIn(login, password) {
+      const { error } = await supabase.auth.signInWithPassword({ email: authEmail(login), password })
       if (error) throw error
     },
     async signOut() {

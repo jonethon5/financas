@@ -3,6 +3,7 @@
 //   set_password  { member_id, password }            → o admin, ou a própria pessoa
 //   remove_login  { member_id }                      → só o admin (não pode remover o próprio)
 //   set_role      { member_id, role }                → só o admin (não pode rebaixar a si mesmo)
+//   create_invite                                    → só o admin: código para outra pessoa criar a PRÓPRIA casa
 import {
   UserError,
   adminClient,
@@ -18,6 +19,14 @@ import {
 
 type MemberRow = { id: string; household_id: string; user_id: string | null; role: string; active: boolean }
 
+// Sem letras/números parecidos (0/O, 1/I/L) para ditar o código sem confusão
+const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+
+function inviteCode(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8))
+  return [...bytes].map((b) => INVITE_ALPHABET[b % INVITE_ALPHABET.length]).join('')
+}
+
 Deno.serve(
   handle(async (req) => {
     const admin = adminClient()
@@ -30,6 +39,28 @@ Deno.serve(
       .eq('user_id', uid)
       .maybeSingle<MemberRow>()
     if (!caller || !caller.active) throw new UserError('Você não faz parte de uma casa.', 403)
+
+    if (body.action === 'create_invite') {
+      if (caller.role !== 'admin') throw new UserError('Só o administrador gera convites.', 403)
+      // Máximo de convites em aberto por casa, para ninguém gerar códigos sem parar
+      const { count } = await admin
+        .from('invites')
+        .select('code', { count: 'exact', head: true })
+        .eq('household_id', caller.household_id)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+      if ((count ?? 0) >= 5) throw new UserError('Já existem 5 convites sem uso. Espere alguém usar ou vencer (7 dias).')
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const code = inviteCode()
+        const { data, error } = await admin
+          .from('invites')
+          .insert({ code, household_id: caller.household_id, created_by: caller.id })
+          .select('code, expires_at')
+          .single()
+        if (!error) return json({ code: `${data.code.slice(0, 4)}-${data.code.slice(4)}`, expires_at: data.expires_at })
+      }
+      throw new UserError('Não foi possível gerar o convite. Tente de novo.')
+    }
 
     const { data: target } = await admin
       .from('members')
@@ -83,7 +114,7 @@ Deno.serve(
         if (!target.user_id) return json({ ok: true })
         const { error } = await admin.auth.admin.deleteUser(target.user_id)
         if (error) throw new UserError('Não foi possível remover o acesso.')
-        await admin.from('members').update({ user_id: null, username: null, role: 'member' }).eq('id', target.id)
+        await admin.from('members').update({ user_id: null, username: null, login_email: null, role: 'member' }).eq('id', target.id)
         await admin.from('push_subscriptions').delete().eq('member_id', target.id)
         return json({ ok: true })
       }
