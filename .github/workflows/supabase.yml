@@ -59,20 +59,20 @@ jobs:
         run: supabase link --project-ref "$PROJECT_REF"
 
       - name: Aplicar o banco (migrations)
-        run: supabase db push --remote --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db push --remote --password "$SUPABASE_DB_PASSWORD" --yes
 
       - name: Publicar Edge Functions
-        run: supabase functions deploy
+        run: supabase functions deploy --yes
 
       - name: Secrets das funções
         env:
           SETUP_CODE: ${{ secrets.SETUP_CODE }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          supabase secrets set SETUP_CODE="$SETUP_CODE"
+          supabase secrets set SETUP_CODE="$SETUP_CODE" --yes
           # Assistente (opcional): chave do Gemini, criada de graça no Google AI Studio
           if [ -n "$GEMINI_API_KEY" ]; then
-            supabase secrets set GEMINI_API_KEY="$GEMINI_API_KEY"
+            supabase secrets set GEMINI_API_KEY="$GEMINI_API_KEY" --yes
           else
             echo "::notice::Sem GEMINI_API_KEY: o assistente fica desligado."
           fi
